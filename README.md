@@ -47,6 +47,28 @@ Tracktive is your AI agent that:
 
 ---
 
+## 🔄 Workflow Diagram (Simplified)
+
+```text
+[User Adds Competitor URLs]
+            ↓
+     [Scraper (BeautifulSoup)]
+            ↓
+    [Change Detector Engine]
+            ↓
+   [Ollama + LLaMA 3 Summary]
+            ↓
+     [Scoring + Tag Engine]
+            ↓
+        [Flask Backend]
+            ↓
+[Interactive UI] + [PDF/Report Generator]
+            ↓
+   [Slack / Notion Simulated Delivery]
+```
+
+---
+
 ## 🌟 Key Features at a Glance
 
 | 🔧 Feature               | 💬 Description                                       |
