@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Competitor Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Dashboard</h1>
+            <p>Comprehensive competitor analysis and insights</p>
+        </header>
+
+        <nav>
+            <a href="/" class="nav-link">🏠 Home</a>
+            <a href="/dashboard" class="nav-link active">📊 Dashboard</a>
+            <a href="/comparison" class="nav-link">🆚 Comparison</a>
+        </nav>
+
+        <main>
+            <section class="dashboard-stats">
+                <div class="stat-card">
+                    <h3>{{ competitors|length }}</h3>
+                    <p>Competitors Tracked</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ changes|length }}</h3>
+                    <p>Total Changes</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ changes|selectattr('detected_at')|list|length }}</h3>
+                    <p>This Week</p>
+                </div>
+            </section>
+
+            <section class="integrations">
+                <h3>Integrations & Settings</h3>
+                <div class="integration-cards">
+                    <div class="integration-card">
+                        <h4>🔔 Slack Integration</h4>
+                        <p>Send weekly summaries to your Slack channel</p>
+                        <div class="form-group">
+                            <input type="url" id="slackWebhook" placeholder="Slack Webhook URL"
+                                   value="{{ settings.slack_webhook }}">
+                            <button onclick="updateSlackWebhook()" class="btn btn-small">Update</button>
+                        </div>
+                        <button onclick="sendToSlack()" class="btn btn-primary">Send Test Summary</button>
+                    </div>
+                    
+                    <div class="integration-card">
+                        <h4>📝 Notion Integration</h4>
+                        <p>Sync competitor data to your Notion workspace</p>
+                        <div class="form-group">
+                            <input type="text" id="notionToken" placeholder="Notion Integration Token"
+                                   value="{{ settings.notion_token }}">
+                            <button onclick="updateNotionToken()" class="btn btn-small">Update</button>
+                        </div>
+                        <button class="btn btn-primary" disabled>Coming Soon</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="detailed-analysis">
+                <h3>Detailed Analysis</h3>
+                <div class="analysis-controls">
+                    <button onclick="generateDetailedSummary()" class="btn btn-primary">Generate Weekly Summary</button>
+                    <button onclick="exportData()" class="btn btn-secondary">Export Data</button>
+                </div>
+                
+                <div id="summaryOutput" class="summary-output"></div>
+            </section>
+
+            <section class="all-changes">
+                <h3>All Detected Changes</h3>
+                <div class="changes-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Competitor</th>
+                                <th>Analysis</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for change in changes %}
+                            <tr>
+                                <td>{{ change.detected_at[:10] }}</td>
+                                <td>{{ change.competitor_name }}</td>
+                                <td class="analysis-cell">{{ change.analysis[:100] }}...</td>
+                                <td>
+                                    <button onclick="viewChangeDetails({ change.id })" class="btn btn-small">View</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    {% if changes|length == 0 %}
+                    <div class="empty-state">
+                        <p>No changes detected yet. Start scanning competitors to see analysis here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="competitor-management">
+                <h3>Competitor Management</h3>
+                <div class="competitors-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Website</th>
+                                <th>Last Checked</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for competitor in competitors %}
+                            <tr>
+                                <td>{{ competitor.name }}</td>
+                                <td><a href="{{ competitor.website }}" target="_blank">{{ competitor.website }}</a></td>
+                                <td>
+                                    {% if competitor.last_checked %}
+                                        {{ competitor.last_checked[:10] }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </td>
+                                <td><span class="status-badge status-{{ competitor.status }}">{{ competitor.status }}</span></td>
+                                <td>
+                                    <button onclick="scanCompetitor({ competitor.id })" class="btn btn-small">Scan</button>
+                                    <button onclick="editCompetitor({ competitor.id })" class="btn btn-small">Edit</button>
+                                    <button onclick="removeCompetitor({ competitor.id })" class="btn btn-small btn-danger">Remove</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Change Details Modal -->
+    <div id="changeDetailsModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeChangeModal()">&times;</span>
+            <div id="changeDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

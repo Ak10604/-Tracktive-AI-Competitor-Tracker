@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Comparison - AI Competitor Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🆚 Company Comparison</h1>
+            <p>AI-powered competitive intelligence and strategic insights</p>
+        </header>
+
+        <nav>
+            <a href="/" class="nav-link">🏠 Home</a>
+            <a href="/dashboard" class="nav-link">📊 Dashboard</a>
+            <a href="/comparison" class="nav-link active">🆚 Comparison</a>
+        </nav>
+
+        <main>
+            <!-- Company Profile Section -->
+            <section class="company-profile">
+                <h3>🏢 Your Company Profile</h3>
+                {% if company_profile %}
+                <div class="profile-display">
+                    <div class="profile-header">
+                        <h4>{{ company_profile.name }}</h4>
+                        <button onclick="editCompanyProfile()" class="btn btn-small">✏️ Edit Profile</button>
+                    </div>
+                    <div class="profile-details">
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <strong> 🌐 Website:</strong> 
+                                <a href="{{ company_profile.website }}" target="_blank">{{ company_profile.website }}</a>
+                            </div>
+                            <div class="detail-item">
+                                <strong>🏭 Industry:</strong> {{ company_profile.industry }}
+                            </div>
+                            <div class="detail-item">
+                                <strong>📅 Founded:</strong> {{ company_profile.founded_year }}
+                            </div>
+                            <div class="detail-item">
+                                <strong>👥 Size:</strong> {{ company_profile.size }}
+                            </div>
+                            <div class="detail-item">
+                                <strong>📍 Headquarters:</strong> {{ company_profile.headquarters }}
+                            </div>
+                            <div class="detail-item">
+                                <strong>🎯 Target Market:</strong> {{ company_profile.target_market }}
+                            </div>
+                        </div>
+                        <div class="profile-description">
+                            <strong>📝 Description:</strong>
+                            <p>{{ company_profile.description }}</p>
+                        </div>
+                        <div class="profile-products">
+                            <strong>🚀 Key Products:</strong>
+                            <p>{{ company_profile.key_products }}</p>
+                        </div>
+                        <div class="profile-advantages">
+                            <strong>⭐ Competitive Advantages:</strong>
+                            <p>{{ company_profile.competitive_advantages }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">🏢</div>
+                    <h4>Set up your company profile</h4>
+                    <p>Add your company information to enable AI-powered competitive analysis</p>
+                    <button onclick="editCompanyProfile()" class="btn btn-primary">
+                        <span class="btn-icon">➕</span>Create Company Profile
+                    </button>
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- Company Updates Section -->
+            <section class="company-updates">
+                <div class="section-header">
+                    <h3>📢 Your Company Updates</h3>
+                    <div class="section-actions">
+                        <button onclick="addCompanyUpdate()" class="btn btn-primary">
+                            <span class="btn-icon">➕</span>Add Update
+                        </button>
+                        {% if company_updates and company_updates|length > 0 %}
+                        <button onclick="clearAllCompanyUpdates()" class="btn btn-danger btn-small">
+                            <span class="btn-icon">🗑️</span>Clear All
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="updates-list">
+                    {% if company_updates and company_updates|length > 0 %}
+                        {% for update in company_updates %}
+                        <div class="update-item company-update importance-{{ update.importance_score }}" data-update-id="{{ update.id }}">
+                            <div class="update-header">
+                                <div class="update-title">
+                                    <h4>{{ update.title }}</h4>
+                                    <div class="update-badges">
+                                        <span class="update-type-badge {{ update.update_type }}">
+                                            {{ update.update_type.replace('_', ' ').title() }}
+                                        </span>
+                                        <span class="importance-badge level-{{ update.importance_score }}">
+                                            {% if update.importance_score >= 8 %}🚨 Critical
+                                            {% elif update.importance_score >= 6 %}⚠️ Important
+                                            {% elif update.importance_score >= 4 %}📝 Moderate
+                                            {% else %}ℹ️ Minor{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="update-actions">
+                                    <span class="timestamp">📅 {{ update.date_published[:16].replace('T', ' ') if update.date_published else 'No date' }}</span>
+                                    <button onclick="deleteCompanyUpdate({{ update.id }})" class="btn btn-tiny btn-danger" title="Delete Update">
+                                        <span class="btn-icon">🗑️</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% if update.content %}
+                            <div class="update-content">
+                                <p>{{ update.content }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if update.source_url %}
+                            <div class="source-links">
+                                <strong>🔗 Source:</strong>
+                                <a href="{{ update.source_url }}" target="_blank" class="source-link">
+                                    <span class="link-icon">🌐</span>
+                                    {{ update.source_url.split('/')[2] if '/' in update.source_url else update.source_url }}
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if update.tags %}
+                            <div class="update-tags">
+                                <strong>🏷️ Tags:</strong>
+                                {% for tag in update.tags.split(',') %}
+                                <span class="tag">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">📢</div>
+                        <h4>No company updates yet</h4>
+                        <p>Add your company's news, product launches, and announcements to compare with competitors</p>
+                        <button onclick="addCompanyUpdate()" class="btn btn-accent">
+                            <span class="btn-icon">🚀</span>Add First Update
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Competitive Analysis Section -->
+            <section class="competitive-analysis">
+                <div class="section-header">
+                    <h3>🧠 AI Competitive Analysis</h3>
+                    <div class="analysis-controls">
+                        <button onclick="generateCompetitiveInsights()" class="btn btn-primary">
+                            <span class="btn-icon">🤖</span>Generate AI Insights
+                        </button>
+                        <button onclick="exportComparisonReport()" class="btn btn-secondary">
+                            <span class="btn-icon">📄</span>Export Report
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="competitiveInsights" class="insights-output">
+                    <div class="insights-placeholder">
+                        <div class="placeholder-icon">🧠</div>
+                        <h4>AI-Powered Competitive Intelligence</h4>
+                        <p>Generate strategic insights comparing your company with competitor activities, market trends, and opportunities</p>
+                        <button onclick="generateCompetitiveInsights()" class="btn btn-accent">
+                            <span class="btn-icon">🚀</span>Start AI Analysis
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Comparison Filters -->
+            <section class="comparison-filters">
+                <h3>🔍 Filter & Compare</h3>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="timeFilter">📅 Time Period:</label>
+                        <select id="timeFilter" onchange="applyFilters()">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="365">Last year</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="importanceFilter">⚡ Importance Level:</label>
+                        <select id="importanceFilter" onchange="applyFilters()">
+                            <option value="all">All levels</option>
+                            <option value="high">High (7-10)</option>
+                            <option value="medium">Medium (4-6)</option>
+                            <option value="low">Low (1-3)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="typeFilter">📊 Update Type:</label>
+                        <select id="typeFilter" onchange="applyFilters()">
+                            <option value="all">All types</option>
+                            <option value="product_launch">Product Launch</option>
+                            <option value="feature_update">Feature Update</option>
+                            <option value="pricing_change">Pricing Change</option>
+                            <option value="partnership">Partnership</option>
+                            <option value="acquisition">Acquisition</option>
+                            <option value="press_release">Press Release</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="competitorFilter">🏢 Competitors:</label>
+                        <select id="competitorFilter" onchange="applyFilters()">
+                            <option value="all">All competitors</option>
+                            {% for competitor in competitors %}
+                            <option value="{{ competitor.id }}">{{ competitor.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button onclick="resetFilters()" class="btn btn-small btn-secondary">
+                        <span class="btn-icon">🔄</span>Reset
+                    </button>
+                </div>
+            </section>
+
+            <!-- Side-by-Side Comparison -->
+            <section class="side-by-side-comparison">
+                <h3>🆚 Side-by-Side Analysis</h3>
+                
+                <div class="comparison-grid">
+                    <!-- Your Company Column -->
+                    <div class="comparison-column company-column">
+                        <div class="column-header">
+                            <h4>🏢 Your Company</h4>
+                            {% if company_profile %}
+                            <span class="company-name">{{ company_profile.name }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="comparison-content">
+                            <div class="activity-summary">
+                                <div class="summary-stat">
+                                    <span class="stat-number">{{ company_updates|length }}</span>
+                                    <span class="stat-label">Updates</span>
+                                </div>
+                                <div class="summary-stat">
+                                    <span class="stat-number">
+                                        {% set high_priority = company_updates|selectattr('importance_score', 'ge', 7)|list %}
+                                        {{ high_priority|length }}
+                                    </span>
+                                    <span class="stat-label">High Priority</span>
+                                </div>
+                            </div>
+                            
+                            <div class="recent-activity" id="companyActivity">
+                                {% for update in company_updates[:5] %}
+                                <div class="activity-item company-item" data-importance="{{ update.importance_score }}" data-type="{{ update.update_type }}" data-date="{{ update.date_published }}">
+                                    <div class="activity-header">
+                                        <span class="activity-title">{{ update.title }}</span>
+                                        <span class="activity-date">{{ update.date_published[:10] }}</span>
+                                    </div>
+                                    <div class="activity-type">{{ update.update_type.replace('_', ' ').title() }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Competitors Column -->
+                    <div class="comparison-column competitors-column">
+                        <div class="column-header">
+                            <h4>🎯 Competitors</h4>
+                            <span class="competitor-count">{{ competitors|length }} tracked</span>
+                        </div>
+                        
+                        <div class="comparison-content">
+                            <div class="activity-summary">
+                                <div class="summary-stat">
+                                    <span class="stat-number">{{ changes|length }}</span>
+                                    <span class="stat-label">Changes</span>
+                                </div>
+                                <div class="summary-stat">
+                                    <span class="stat-number">
+                                        {% set high_priority = changes|selectattr('importance_score', 'ge', 7)|list %}
+                                        {{ high_priority|length }}
+                                    </span>
+                                    <span class="stat-label">High Priority</span>
+                                </div>
+                            </div>
+                            
+                            <div class="recent-activity" id="competitorActivity">
+                                {% for change in changes[:10] %}
+                                <div class="activity-item competitor-item" data-competitor="{{ change.competitor_id }}" data-importance="{{ change.importance_score }}" data-type="{{ change.change_type }}" data-date="{{ change.detected_at }}">
+                                    <div class="activity-header">
+                                        <span class="activity-title">{{ change.news_title or change.competitor_name + ' Update' }}</span>
+                                        <span class="activity-date">{{ change.detected_at[:10] }}</span>
+                                    </div>
+                                    <div class="activity-meta">
+                                        <span class="activity-competitor">{{ change.competitor_name }}</span>
+                                        <span class="activity-type">{{ change.change_type.replace('_', ' ').title() }}</span>
+                                    </div>
+                                    <div class="activity-excerpt">{{ change.news_excerpt or change.analysis[:100] }}...</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Market Trends Analysis -->
+            <section class="market-trends">
+                <h3>📈 Market Trends & Opportunities</h3>
+                
+                <div class="trends-grid">
+                    <div class="trend-card">
+                        <div class="trend-header">
+                            <h4>🔥 Hot Topics</h4>
+                        </div>
+                        <div class="trend-content">
+                            <div class="trend-list" id="hotTopics">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="trend-card">
+                        <div class="trend-header">
+                            <h4>⚡ Activity Spikes</h4>
+                        </div>
+                        <div class="trend-content">
+                            <div class="trend-list" id="activitySpikes">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="trend-card">
+                        <div class="trend-header">
+                            <h4>🎯 Opportunities</h4>
+                        </div>
+                        <div class="trend-content">
+                            <div class="trend-list" id="opportunities">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Company Profile Modal -->
+    <div id="companyProfileModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeCompanyProfileModal()">&times;</span>
+            <div class="modal-header">
+                <h3>🏢 Company Profile</h3>
+                <p>Set up your company information for competitive analysis</p>
+            </div>
+            <form id="companyProfileForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="companyName">🏢 Company Name *</label>
+                        <input type="text" id="companyName" required placeholder="Your Company Name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="companyWebsite">🌐 Website</label>
+                        <input type="url" id="companyWebsite" placeholder="https://yourcompany.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="companyIndustry">🏭 Industry *</label>
+                        <input type="text" id="companyIndustry" required placeholder="e.g., Technology, Healthcare, Finance">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="foundedYear">📅 Founded Year</label>
+                        <input type="number" id="foundedYear" placeholder="2020" min="1800" max="2024">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="companySize">👥 Company Size</label>
+                        <select id="companySize">
+                            <option value="">Select size</option>
+                            <option value="1-10">1-10 employees</option>
+                            <option value="11-50">11-50 employees</option>
+                            <option value="51-200">51-200 employees</option>
+                            <option value="201-500">201-500 employees</option>
+                            <option value="501-1000">501-1000 employees</option>
+                            <option value="1000+">1000+ employees</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="headquarters">📍 Headquarters</label>
+                        <input type="text" id="headquarters" placeholder="City, Country">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="companyDescription">📝 Company Description</label>
+                    <textarea id="companyDescription" rows="3" placeholder="Brief description of your company and what you do"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="keyProducts">🚀 Key Products/Services</label>
+                    <textarea id="keyProducts" rows="3" placeholder="List your main products or services"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="targetMarket">🎯 Target Market</label>
+                    <textarea id="targetMarket" rows="2" placeholder="Describe your target customers and market"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="competitiveAdvantages">⭐ Competitive Advantages</label>
+                    <textarea id="competitiveAdvantages" rows="3" placeholder="What makes your company unique and competitive?"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-icon">💾</span>Save Profile
+                    </button>
+                    <button type="button" onclick="closeCompanyProfileModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Company Update Modal -->
+    <div id="companyUpdateModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCompanyUpdateModal()">&times;</span>
+            <div class="modal-header">
+                <h3>📢 Add Company Update</h3>
+                <p>Add news, announcements, or updates about your company</p>
+            </div>
+            <form id="companyUpdateForm">
+                <div class="form-group">
+                    <label for="updateTitle">📰 Title *</label>
+                    <input type="text" id="updateTitle" required placeholder="Update headline or title">
+                </div>
+                
+                <div class="form-group">
+                    <label for="updateType">📊 Update Type *</label>
+                    <select id="updateType" required>
+                        <option value="">Select type</option>
+                        <option value="product_launch">Product Launch</option>
+                        <option value="feature_update">Feature Update</option>
+                        <option value="pricing_change">Pricing Change</option>
+                        <option value="partnership">Partnership</option>
+                        <option value="acquisition">Acquisition</option>
+                        <option value="funding">Funding</option>
+                        <option value="press_release">Press Release</option>
+                        <option value="blog_post">Blog Post</option>
+                        <option value="general">General Update</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="updateImportance">⚡ Importance Level *</label>
+                    <select id="updateImportance" required>
+                        <option value="">Select importance</option>
+                        <option value="10">🚨 Critical (10) - Major announcement</option>
+                        <option value="9">🚨 Critical (9) - Very important</option>
+                        <option value="8">⚠️ High (8) - Important news</option>
+                        <option value="7">⚠️ High (7) - Notable update</option>
+                        <option value="6">📝 Medium (6) - Moderate importance</option>
+                        <option value="5">📝 Medium (5) - Standard update</option>
+                        <option value="4">ℹ️ Low (4) - Minor news</option>
+                        <option value="3">ℹ️ Low (3) - Small update</option>
+                        <option value="2">ℹ️ Low (2) - Routine</option>
+                        <option value="1">ℹ️ Low (1) - Minimal</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="updateDate">📅 Date Published</label>
+                    <input type="date" id="updateDate">
+                </div>
+                
+                <div class="form-group">
+                    <label for="updateContent">📝 Content</label>
+                    <textarea id="updateContent" rows="4" placeholder="Detailed description of the update"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="updateSource">🔗 Source URL</label>
+                    <input type="url" id="updateSource" placeholder="https://yourcompany.com/news/update">
+                </div>
+                
+                <div class="form-group">
+                    <label for="updateTags">🏷️ Tags</label>
+                    <input type="text" id="updateTags" placeholder="product, launch, ai, technology (comma-separated)">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-icon">📢</span>Add Update
+                    </button>
+                    <button type="button" onclick="closeCompanyUpdateModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Enhanced Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="ai-spinner">
+                <div class="spinner-ring"></div>
+                <div class="ai-brain">🧠</div>
+            </div>
+            <h3>AI Processing...</h3>
+            <p id="loadingText">Analyzing competitor data with Ollama</p>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+    // Initialize comparison page
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🆚 Initializing comparison page...');
+        
+        // Initialize comparison-specific features first
+        initializeComparison();
+        loadMarketTrends();
+        
+        // Set default date for update form
+        const today = new Date().toISOString().split('T')[0];
+        const updateDateInput = document.getElementById('updateDate');
+        if (updateDateInput) {
+            updateDateInput.value = today;
+        }
+        
+        // Initialize company profile form specifically
+        const companyProfileForm = document.getElementById('companyProfileForm');
+        if (companyProfileForm) {
+            console.log('✅ Company profile form found, adding event listener');
+            companyProfileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('📝 Company profile form submitted');
+
+                const formData = {
+                    name: document.getElementById('companyName')?.value?.trim() || '',
+                    website: document.getElementById('companyWebsite')?.value?.trim() || '',
+                    industry: document.getElementById('companyIndustry')?.value?.trim() || '',
+                    founded_year: document.getElementById('foundedYear')?.value || null,
+                    size: document.getElementById('companySize')?.value || '',
+                    headquarters: document.getElementById('headquarters')?.value?.trim() || '',
+                    description: document.getElementById('companyDescription')?.value?.trim() || '',
+                    key_products: document.getElementById('keyProducts')?.value?.trim() || '',
+                    target_market: document.getElementById('targetMarket')?.value?.trim() || '',
+                    competitive_advantages: document.getElementById('competitiveAdvantages')?.value?.trim() || ''
+                };
+
+                console.log('📝 Form data:', formData);
+
+                if (!formData.name || !formData.industry) {
+                    showNotification('Please fill in required fields (Name and Industry)', 'error');
+                    return;
+                }
+
+                showLoading('💾 Saving company profile...');
+
+                try {
+                    const response = await fetch('/save_company_profile', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+                    console.log('📝 Server response:', result);
+
+                    if (result.success) {
+                        showNotification('💾 Company profile saved successfully!', 'success');
+                        closeCompanyProfileModal();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showNotification('Failed to save profile: ' + (result.error || 'Unknown error'), 'error');
+                    }
+                } catch (error) {
+                    console.error('❌ Error saving profile:', error);
+                    showNotification('Error saving profile: ' + error.message, 'error');
+                } finally {
+                    hideLoading();
+                }
+            });
+        } else {
+            console.error('❌ Company profile form not found!');
+        }
+
+        // Initialize company update form specifically
+        const companyUpdateForm = document.getElementById('companyUpdateForm');
+        if (companyUpdateForm) {
+            console.log('✅ Company update form found, adding event listener');
+            companyUpdateForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('📢 Company update form submitted');
+
+                const formData = {
+                    title: document.getElementById('updateTitle')?.value?.trim() || '',
+                    update_type: document.getElementById('updateType')?.value || '',
+                    importance_score: parseInt(document.getElementById('updateImportance')?.value) || 5,
+                    date_published: document.getElementById('updateDate')?.value || new Date().toISOString().split('T')[0],
+                    content: document.getElementById('updateContent')?.value?.trim() || '',
+                    source_url: document.getElementById('updateSource')?.value?.trim() || '',
+                    tags: document.getElementById('updateTags')?.value?.trim() || ''
+                };
+
+                console.log('📢 Update form data:', formData);
+
+                if (!formData.title || !formData.update_type) {
+                    showNotification('Please fill in required fields (Title and Update Type)', 'error');
+                    return;
+                }
+
+                showLoading('📢 Adding company update...');
+
+                try {
+                    const response = await fetch('/add_company_update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+                    console.log('📢 Server response:', result);
+
+                    if (result.success) {
+                        showNotification('📢 Company update added successfully!', 'success');
+                        closeCompanyUpdateModal();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showNotification('Failed to add update: ' + (result.error || 'Unknown error'), 'error');
+                    }
+                } catch (error) {
+                    console.error('❌ Error adding update:', error);
+                    showNotification('Error adding update: ' + error.message, 'error');
+                } finally {
+                    hideLoading();
+                }
+            });
+        } else {
+            console.error('❌ Company update form not found!');
+        }
+
+        // Debug: Check if forms are properly initialized
+        console.log('🔍 Form check:');
+        console.log('Company profile form:', document.getElementById('companyProfileForm'));
+        console.log('Company update form:', document.getElementById('companyUpdateForm'));
+        console.log('Company name input:', document.getElementById('companyName'));
+        console.log('Update title input:', document.getElementById('updateTitle'));
+    });
+
+    // Company Profile Modal Functions - Override for comparison page
+    function editCompanyProfile() {
+        console.log('🏢 Opening company profile modal');
+        const modal = document.getElementById('companyProfileModal');
+        if (modal) {
+            modal.style.display = 'block';
+            // Pre-fill form if profile exists
+            fillCompanyProfileForm();
+        } else {
+            console.error('❌ Company profile modal not found!');
+        }
+    }
+
+    function closeCompanyProfileModal() {
+        console.log('🏢 Closing company profile modal');
+        const modal = document.getElementById('companyProfileModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function fillCompanyProfileForm() {
+        console.log('🏢 Filling company profile form');
+        // Get existing company profile data from the page
+        const profileDisplay = document.querySelector('.profile-display');
+        if (!profileDisplay) {
+            console.log('ℹ️ No existing profile to pre-fill');
+            return;
+        }
+
+        try {
+            // Extract data from the displayed profile
+            const name = document.querySelector('.profile-header h4')?.textContent || '';
+            const website = document.querySelector('.detail-item a')?.href || '';
+            const industryElement = document.querySelector('.detail-item:contains("Industry")');
+            const industry = industryElement ? industryElement.textContent.replace('🏭 Industry:', '').trim() : '';
+
+            // Populate form fields
+            if (document.getElementById('companyName')) document.getElementById('companyName').value = name;
+            if (document.getElementById('companyWebsite')) document.getElementById('companyWebsite').value = website;
+            if (document.getElementById('companyIndustry')) document.getElementById('companyIndustry').value = industry;
+
+            console.log('✅ Form pre-filled with existing data');
+        } catch (error) {
+            console.log('⚠️ Could not pre-fill form:', error);
+        }
+    }
+
+    // Company Update Modal Functions - Override for comparison page
+    function addCompanyUpdate() {
+        console.log('📢 Opening company update modal');
+        const modal = document.getElementById('companyUpdateModal');
+        if (modal) {
+            modal.style.display = 'block';
+        } else {
+            console.error('❌ Company update modal not found!');
+        }
+    }
+
+    function closeCompanyUpdateModal() {
+        console.log('📢 Closing company update modal');
+        const modal = document.getElementById('companyUpdateModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        const form = document.getElementById('companyUpdateForm');
+        if (form) {
+            form.reset();
+        }
+    }
+
+    // Delete company update function - Override for comparison page
+    async function deleteCompanyUpdate(updateId) {
+        if (!confirm('Are you sure you want to delete this update?')) {
+            return;
+        }
+
+        showLoading('🗑️ Deleting company update...');
+
+        try {
+            const response = await fetch(`/delete_company_update/${updateId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showNotification('🗑️ Company update deleted successfully!', 'success');
+                // Remove the update from the DOM
+                const updateElement = document.querySelector(`[data-update-id="${updateId}"]`);
+                if (updateElement) {
+                    updateElement.remove();
+                }
+                // Reload page after a short delay to update counts
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showNotification('Failed to delete update: ' + (result.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            showNotification('Error deleting update: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Clear all company updates function - Override for comparison page
+    async function clearAllCompanyUpdates() {
+        if (!confirm('Are you sure you want to delete ALL company updates? This action cannot be undone.')) {
+            return;
+        }
+
+        showLoading('🗑️ Clearing all company updates...');
+
+        try {
+            const response = await fetch('/clear_all_company_updates', {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showNotification('🗑️ All company updates cleared successfully!', 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showNotification('Failed to clear updates: ' + (result.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            showNotification('Error clearing updates: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+</script>
+</body>
+</html>

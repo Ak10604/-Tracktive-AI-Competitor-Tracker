@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Competitor Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1> Tracktive </h1>
+            <div class="auto-scan-indicator">
+                <div class="pulse-dot"></div>
+                <span>Auto-scanning every 5 minutes</span>
+            </div>
+        </header>
+
+        <nav>
+            <a href="/" class="nav-link active">🏠 Home</a>
+            <a href="/dashboard" class="nav-link">📊 Dashboard</a>
+            <a href="/comparison" class="nav-link">🆚 Comparison</a>
+        </nav>
+
+        <main>
+            <!-- Hero Section -->
+            <section class="hero">
+                <h2>🧠 Intelligent Competitor Monitoring</h2>
+                <p>Track competitor changes with AI-powered analysis using Ollama for deep insights and strategic intelligence</p>
+                <div class="hero-features">
+                    <div class="feature-badge">
+                        <span class="feature-icon">🤖</span>
+                        <span>AI Analysis</span>
+                    </div>
+                    <div class="feature-badge">
+                        <span class="feature-icon">📊</span>
+                        <span>Smart Insights</span>
+                    </div>
+                    <div class="feature-badge">
+                        <span class="feature-icon">⚡</span>
+                        <span>Real-time Alerts</span>
+                    </div>
+                    <div class="feature-badge">
+                        <span class="feature-icon">📄</span>
+                        <span>PDF Reports</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="quick-actions">
+                <h3>🚀 Quick Actions</h3>
+                <div class="action-buttons">
+                    <button onclick="showAddCompetitorModal()" class="btn btn-primary">
+                        <span class="btn-icon">➕</span>Add Competitor
+                    </button>
+                    <button onclick="scanAllCompetitors()" class="btn btn-accent">
+                        <span class="btn-icon">🔍</span>Scan All Now
+                    </button>
+                    <button onclick="generateSummary()" class="btn btn-secondary">
+                        <span class="btn-icon">📝</span>AI Summary
+                    </button>
+                    <button onclick="generatePDFReport()" class="btn btn-pdf">
+                        <span class="btn-icon">📄</span>PDF Report
+                    </button>
+                </div>
+            </section>
+
+            <!-- Competitors Overview -->
+            <section class="competitors-overview">
+                <h3>🎯 Monitored Competitors</h3>
+                {% if competitors %}
+                <div class="competitors-grid">
+                    {% for competitor in competitors %}
+                    <div class="competitor-card" data-competitor-id="{{ competitor.id }}">
+                        <div class="card-header">
+                            <h4>{{ competitor.name }}</h4>
+                            <div class="status-indicator {% if competitor.last_checked %}active{% else %}new{% endif %}"></div>
+                        </div>
+                        <div class="url">
+                            <a href="{{ competitor.website }}" target="_blank">{{ competitor.website }}</a>
+                        </div>
+                        <div class="last-checked">
+                            <span>🕒 Last checked:</span>
+                            {% if competitor.last_checked %}
+                            <span class="date">{{ competitor.last_checked[:16].replace('T', ' ') }}</span>
+                            {% else %}
+                            <span class="never">Never</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-actions">
+                            <button onclick="scanCompetitor({{ competitor.id }})" class="btn btn-small btn-primary">
+                                <span class="btn-icon">🔍</span>Scan Now
+                            </button>
+                            <button onclick="removeCompetitor({{ competitor.id }})" class="btn btn-small btn-danger">
+                                <span class="btn-icon">🗑️</span>Remove
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <h4>No competitors added yet</h4>
+                    <p>Start monitoring your competition with AI-powered analysis</p>
+                    <button onclick="showAddCompetitorModal()" class="btn btn-primary">
+                        <span class="btn-icon">🚀</span>Add First Competitor
+                    </button>
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- Recent Changes -->
+            <section class="recent-changes">
+                <div class="changes-header">
+                    <h3>📰 Latest Competitor News & Updates</h3>
+                    <div class="news-filters">
+                        <select id="newsImportanceFilter" onchange="filterNews()">
+                            <option value="all">All Updates</option>
+                            <option value="high">🚨 Critical & Important (7-10)</option>
+                            <option value="moderate">📝 Moderate (4-6)</option>
+                            <option value="low">ℹ️ Minor (1-3)</option>
+                        </select>
+                        <button onclick="refreshChanges()" class="btn btn-small btn-refresh">
+                            <span class="btn-icon">🔄</span>Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                {% if recent_changes %}
+                <div class="changes-list" id="changesList">
+                    {% for change in recent_changes %}
+                    <div class="change-item importance-{{ change.importance_score }}" data-change-id="{{ change.id }}" data-importance="{{ change.importance_score }}">
+                        <div class="change-header">
+                            <div class="change-title">
+                                <h4>{{ change.competitor_name }}</h4>
+                                <div class="change-badges">
+                                    <span class="change-type-badge">{{ change.change_type.replace('_', ' ').title() }}</span>
+                                    <span class="importance-badge level-{{ change.importance_score }}">
+                                        {% if change.importance_score >= 8 %}🚨 Critical
+                                        {% elif change.importance_score >= 6 %}⚠️ Important
+                                        {% elif change.importance_score >= 4 %}📝 Moderate
+                                        {% else %}ℹ️ Minor{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="timestamp">📅 {{ change.detected_at[:16].replace('T', ' ') }}</span>
+                        </div>
+                        
+                        {% if change.news_title and change.news_title != change.competitor_name + ' Update' %}
+                        <div class="news-section">
+                            <div class="news-title">{{ change.news_title }}</div>
+                            {% if change.news_excerpt %}
+                            <div class="news-excerpt">{{ change.news_excerpt }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="analysis-content">
+                            <div class="analysis">{{ change.analysis }}</div>
+                        </div>
+                        
+                        {% if change.changelog_content %}
+                        <div class="changelog-preview">
+                            <strong>📋 Changelog Preview:</strong>
+                            <div class="changelog">{{ change.changelog_content[:200] }}{% if change.changelog_content|length > 200 %}...{% endif %}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if change.source_links %}
+                        <div class="source-links">
+                            <strong>🔗 Sources:</strong>
+                            <a href="{{ change.source_links }}" target="_blank" class="source-link">
+                                <span class="link-icon">🌐</span>
+                                {{ change.source_links.split('/')[2] if '/' in change.source_links else change.source_links }}
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="change-actions">
+                            <button onclick="viewFullChange({{ change.id }})" class="btn btn-small btn-secondary">
+                                <span class="btn-icon">👁️</span>View Details
+                            </button>
+                            <button onclick="shareChange({{ change.id }})" class="btn btn-small btn-accent">
+                                <span class="btn-icon">📤</span>Share
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="load-more-section">
+                    <button onclick="loadMoreChanges()" class="btn btn-secondary">
+                        <span class="btn-icon">📜</span>Load More Changes
+                    </button>
+                    <span class="changes-count">Showing {{ recent_changes|length }} recent changes</span>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📰</div>
+                    <h4>No competitor changes detected yet</h4>
+                    <p>Add competitors and run scans to start tracking changes with AI analysis</p>
+                    <button onclick="showAddCompetitorModal()" class="btn btn-accent">
+                        <span class="btn-icon">🎯</span>Add Competitors
+                    </button>
+                </div>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+
+    <!-- Add Competitor Modal -->
+    <div id="addCompetitorModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h3>🎯 Add Competitor</h3>
+                <p>Start monitoring a new competitor with AI-powered analysis</p>
+            </div>
+            <form id="addCompetitorForm">
+                <div class="form-group">
+                    <label for="competitorName">🏢 Company Name *</label>
+                    <input type="text" id="competitorName" required placeholder="Enter competitor name">
+                </div>
+                <div class="form-group">
+                    <label for="competitorWebsite">🌐 Website URL *</label>
+                    <input type="url" id="competitorWebsite" required placeholder="https://competitor.com">
+                </div>
+                <div class="form-group">
+                    <label for="changelogUrl">📋 Changelog/News URL (Optional)</label>
+                    <input type="url" id="changelogUrl" placeholder="https://competitor.com/changelog">
+                    <small>Direct link to changelog, release notes, or news page for better tracking</small>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-icon">🚀</span>Start Monitoring
+                    </button>
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Details Modal -->
+    <div id="changeDetailsModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeChangeModal()">&times;</span>
+            <div id="changeDetailsContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="ai-spinner">
+                <div class="spinner-ring"></div>
+                <div class="ai-brain">🧠</div>
+            </div>
+            <h3>AI Processing...</h3>
+            <p id="loadingText">Analyzing competitor data with Ollama</p>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // News filtering function
+        function filterNews() {
+            const filter = document.getElementById('newsImportanceFilter').value;
+            const changeItems = document.querySelectorAll('.change-item');
+            
+            changeItems.forEach(item => {
+                const importance = parseInt(item.dataset.importance);
+                let show = true;
+                
+                switch(filter) {
+                    case 'high':
+                        show = importance >= 7;
+                        break;
+                    case 'moderate':
+                        show = importance >= 4 && importance <= 6;
+                        break;
+                    case 'low':
+                        show = importance <= 3;
+                        break;
+                    case 'all':
+                    default:
+                        show = true;
+                        break;
+                }
+                
+                item.style.display = show ? 'block' : 'none';
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize form handlers
+            initializeForm();
+            
+            // Show appropriate welcome message
+            const competitors = document.querySelectorAll('.competitor-card');
+            const changes = document.querySelectorAll('.change-item');
+            
+            if (competitors.length === 0) {
+                setTimeout(() => {
+                    showNotification('👋 Welcome! Add your first competitor to start AI monitoring', 'info');
+                }, 1000);
+            } else if (changes.length === 0) {
+                setTimeout(() => {
+                    showNotification('🔍 Competitors added! Run a scan to start detecting changes', 'info');
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
