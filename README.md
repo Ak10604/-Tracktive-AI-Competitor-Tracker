@@ -34,19 +34,16 @@ Tracktive is your AI agent that:
 
 ---
 
-## 🛠️ Architecture Diagram
+## 🛠️ Architecture Overview (Text Summary)
 
-```mermaid
-graph TD
-    A[User Enters Competitor URLs] --> B[Scraper (BeautifulSoup)]
-    B --> C[Change Diff Engine]
-    C --> D[Ollama + LLaMA 3 for Summaries]
-    D --> E[Scoring Engine (Heuristics)]
-    E --> F[Flask API Backend]
-    F --> G[Frontend UI (JS/HTML/CSS)]
-    F --> H[PDF Generator]
-    H --> I[Simulated Slack/Notion Delivery]
-```
+1. **Input URLs** – The user adds competitor URLs or changelog links.
+2. **Scraping Engine** – Runs at intervals to fetch updated page content.
+3. **Change Detector** – Compares current content with last version.
+4. **AI Summarizer** – Generates brief summaries using LLaMA 3 via Ollama.
+5. **Scoring Engine** – Assigns relevance scores using keyword context.
+6. **Flask Backend** – Connects frontend to logic.
+7. **Frontend UI** – Shows summaries and filters with clean UX.
+8. **Report Generator** – Option to download as PDF or simulate Slack/Notion delivery.
 
 ---
 
@@ -61,19 +58,6 @@ graph TD
 | Clean UI                 | Easy-to-use dashboard with filters and sorting       |
 | Weekly Digest Simulation | Bundles updates into shareable reports               |
 | Slack/Notion Integration | Simulated delivery endpoints via webhook             |
-
----
-
-## 🔁 User Flow
-
-```mermaid
-graph LR
-    A[User Adds Competitor] --> B[Scraper Runs on Schedule]
-    B --> C[Change Detector Compares Versions]
-    C --> D[AI Summarizer Condenses Differences]
-    D --> E[Relevance Score Applied]
-    E --> F[Frontend Renders in Dashboard or Report]
-```
 
 ---
 
